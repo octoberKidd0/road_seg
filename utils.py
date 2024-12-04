@@ -31,26 +31,21 @@ def detect_objects(model, frame, class_names, display_width):
         
         #Draw bounding boxes and labels
         if r.boxes: #If bounding boxes are detected
+            for box in r.boxes:
+                x1, y1, x2, y2 = map(int, box.xyxy[0]) #Bounding box coordinates
+                conf = round(box.conf[0].item(), 2) #Confidence score
+                cls = f"{class_names[cls]} {conf}" # Label with class name and confidence
+                label = f"{class_names[cls]} {conf}"
 
-        for box in r.boxes:
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
-            conf = round(box.conf[0].item(), 2)
-            cls = int(box.cls[0])
-            label = f"{class_names[cls]} {conf}"
-            draw_bounding_box(frame, x1, y1, x2, y2, label)
-    return frame
+                #Draw bounding box
+                cv2.rectangle(resized_frame, {x1, y1}, (x2, y2),(0, 255, 0), 5)
 
-# Draw bounding boxes and labels
-def draw_bounding_box(frame, x1, y1, x2, y2, label):
-    """Draw bounding box and label on the frame."""
-    cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 255), 2)
-    cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-
-
+                #Add label above the bounding box
+                cv2.putText(resized_frame, label, (x1, max(y1 - 10, 0)), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
+    return resized_frame
 
 def process_video_frame(model, frame, class_names, display_width):
-    """Detect objects and return the processed frame."""
-    frame = detect_objects(model, frame, class_names)
-    resized_frame = cv2.resize(frame, (display_width, int(display_width / frame.shape[1] * frame.shape[0])))
-    rgb_frame = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
+    """Process a single video frame for segmentation"""
+    frame_with_objects = detect_objects(model, frame, class_names, display_width)
+    rgb_frame = cv2.cvtColor(frame_with_objects, cv2.COLOR_BGR2RGB)
     return rgb_frame
